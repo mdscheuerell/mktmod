@@ -92,6 +92,66 @@ png("prod vs year (JD Rf).png", width=9, height=5, units="in", res=300)
 dev.off()
 
 
+#---------------------
+# plot assets by popn
+#---------------------
+
+pts <- prod.pop[1:39,names.mat$ID]
+
+# total num of ts
+NN <- dim(pts)[2]
+
+# set up colors; group by MPG
+col.pal <- c(rainbow(6, start=0.05, end=0.12),
+			 rainbow(3, start=0.2, end=0.45, v=0.7),
+			 rainbow(6, start=0.8, end=0.95, v=0.85),
+			 rainbow(6, start=0.55, end=0.7))
+
+# inches of indent for panel labels
+marg <- 0.05
+# x-indent
+xin <- par()$usr[1] + marg/par()$pin[1]*(par()$usr[2] - par()$usr[1])
+# y-indent
+yin <- par()$usr[4] - marg/par()$pin[2]*(par()$usr[4] - par()$usr[3])
+
+# num of rows for plot
+nr <- 3
+# num of cols for plot
+nc <- 7
+
+# set graphics params
+dev.new(width=9,height=5)
+par(mfcol=c(nr,nc), mai=c(0.1,0.07,0.2,0.07), omi=c(0.6,0.6,0,0))
+
+# get extent of y-limits
+yext <- c(floor(min(pts, na.rm=T)/0.5)*0.5,
+		  ceiling(max(pts, na.rm=T)/0.5)*0.5)
+yext <- c(floor(min(pts, na.rm=T)/0.1)*0.1,
+		  ceiling(max(pts, na.rm=T)/0.1)*0.1)
+
+
+# draw plots
+for(i in 1:NN) {
+	plot(t.index[1:39], pts[,i], type="n", lwd=2, col=col.pal[i],
+		 ylim=yext, xaxt="n", yaxt="n",
+		 xlab="", ylab="", main=names.mat[i,"long"])
+	abline(h=0, col="gray")
+	lines(t.index[1:39], pts[,i], lwd=2, col=col.pal[i])
+	if(i<=nr | nc==1) {
+		axis(side=2, at=c(-4,-2,0,2,4), las=1, tick=TRUE)
+		}
+	if(i%%nr==0) {
+		axis(side=1, at=t.index[(t.index %% 10)==0])
+		}
+	}
+#mtext("Brood year", side=1, outer=TRUE, line=3, cex=1.2)
+mtext("Year", side=1, outer=TRUE, line=3, cex=1.2)
+mtext("log(survival)", side=2, outer=TRUE, line=2.2, cex=1.5)
+
+png("RS vs year (64-06).png", width=9, height=5, units="in", res=300)
+dev.off()
+
+
 #-------------
 # plot alphas 
 #-------------
@@ -233,16 +293,21 @@ col.pal <- rep(col.choices,each=10)[1:TT+4]
 # get asset surplus with Rf != 0
 prod.sur <- prod.pop[,names.mat$ID] - (diag(prod.mkt)-diag(Rf))%*%betas4
 
+
+## decades
+decades <- 1:TT
+
+
 # rearrange returns & betas
-pds <- prod.sur[,names.mat$ID]
-bts <- betas4[,names.mat$ID]
+pds <- prod.sur[decades,names.mat$ID]
+bts <- betas4[decades,names.mat$ID]
 
 # build list of plot data
 plot.dat <- list()
 for(i in 1:NN) {
  	plot.dat[[i]] <- data.frame(beta=bts[!is.na(pds[,i]),i],
  								return=pds[!is.na(pds[,i]),i],
- 								color=col.pal[!is.na(pds[,i])],
+ 								color=col.pal[decades[!is.na(pds[,i])]],
  								stringsAsFactors=FALSE)
 	}
 
@@ -296,9 +361,7 @@ mtext(expression(paste("Adjusted return in year ",italic(t),"+1")),
 	  side=2, outer=TRUE, line=2.4, cex=1.4)
 
 
-#par(mfg=c(2,3))
-
-png("Sp beta vs return (PDO mkt 0 risk 64-06).png", width=9, height=5, units="in", res=300)
+png("RS beta vs return (PDO mkt 0 risk 00s).png", width=9, height=5, units="in", res=300)
 dev.off()
 
 
