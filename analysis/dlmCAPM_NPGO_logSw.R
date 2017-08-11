@@ -1,6 +1,15 @@
 
 
-#-------------# user inputs#-------------# first brood year to consideryr.first <- 1964# last brood year to consideryr.last <- 2006
+
+#-------------
+# user inputs
+#-------------
+
+# first brood year to consider
+yr.first <- 1964
+
+# last brood year to consider
+yr.last <- 2006
 
 # time lag for market index
 lag <- 2
@@ -11,7 +20,8 @@ mkt.file <- "PDO.csv"
 # name of risk-free index file
 free.file <- "zero.csv"
 
-# name of data filedata.file <- "ICTRT_Chinook_R-S_data_v121115.txt"
+# name of data file
+data.file <- "ICTRT_Chinook_R-S_data_v130701.txt"
 
 # popns to exclude?
 pops.out <- c("Tucannon", "Pahsimeroi")
@@ -28,9 +38,13 @@ resp.var <- "log.Rw.Sw"
 # should asset index be z-scored
 z.flag <- FALSE
 
-#-------# inits#-------
 
-# load necessary pkgslibrary(reshape)
+#-------
+# inits
+#-------
+
+# load necessary pkgs
+library(reshape)
 library(MARSS)
 
 
@@ -40,7 +54,11 @@ library(MARSS)
 
 # years of interest
 t.index <- seq(yr.first, yr.last)
-# length of time periodTT <- length(t.index)# get mkt index file
+
+# length of time period
+TT <- length(t.index)
+
+# get mkt index file
 mkt.table <- read.csv(mkt.file, header=TRUE, sep=",")
 
 # get subset of mkt index
@@ -52,14 +70,18 @@ free.table <- read.csv(free.file, header=TRUE, sep=",")
 # get subset of mkt index
 free.sub <- free.table[free.table$year>=yr.first & free.table$year<=yr.last,]
 
-# get data filedata.table <- read.table(data.file, header=TRUE, sep="\t")
+# get data file
+data.table <- read.table(data.file, header=TRUE, sep="\t")
 
 # change Imnaha name for easier sorting later
 data.table[,"code"] <- sub("IRMAI", "GR.IR", data.table[,"code"])
 
 # drop any popns
 data.table <- data.table[!(data.table$popn %in% pops.out),]
-# get subset of datadata.sub <- subset(data.table,				   brood.yr>=yr.first & brood.yr<=yr.last,
+
+# get subset of data
+data.sub <- subset(data.table,
+				   brood.yr>=yr.first & brood.yr<=yr.last,
 				   select=c(mpg, code, brood.yr, nSw, ha, log.Rw.Sw))
 
 # names of popns
@@ -205,17 +227,19 @@ for(i in 1:length(mpg.ID)) {
 	
 	# list of control values
 	con.list <- list(safe=TRUE, allow.degen=FALSE,
-					 conv.test.slope.tol=2, abstol=1e-04, maxit=5e04)
+	                 conv.test.slope.tol=2, abstol=1e-04, maxit=5e04)
 	
 	# fit multivariate DLM
 	mod.res[[i]] <- MARSS(t(prod.mpg), inits=inits.list, model=mod.list, control=con.list)
 	
-	# get list of Kalman filter output	kf.out = MARSSkfss(mod.res[[i]])
+	# get list of Kalman filter output
+	kf.out = MARSSkfss(mod.res[[i]])
 
 	# ts of forecasted betas
 	betas4 <- cbind(betas4,t(kf.out$xtt1[(1:nn)+nn,]))
 
-	# ts of SE of betas; nxT matrix	betas4.se <- cbind(betas4.se,sqrt(t(apply(kf.out$Vtt1,3,diag)[(1:nn)+nn,])))
+	# ts of SE of betas; nxT matrix
+	betas4.se <- cbind(betas4.se,sqrt(t(apply(kf.out$Vtt1,3,diag)[(1:nn)+nn,])))
 
 	# ts of alphas
 	alphas <- cbind(alphas,t(mod.res[[i]]$states[1:nn,]))
